@@ -1,6 +1,6 @@
 Output/Release/Obj/ble_app_template_pca10040_s132/ble_cus.o: \
- D\:\Downloads\nRF5_SDK_17.0.2_d674dde\examples\My\ Project\ble_app_template_ADS_ECG\Custm_Ble_Services\ble_cus\ble_cus.c \
- D\:\Downloads\nRF5_SDK_17.0.2_d674dde\examples\My\ Project\ble_app_template_ADS_ECG\Custm_Ble_Services\ble_cus\ble_cus.h \
+ D\:\Downloads\nRF5_SDK_17.0.2_d674dde\examples\My\ Project\ECG_EMG_EEG-Project\Custm_Ble_Services\ble_cus\ble_cus.c \
+ D\:\Downloads\nRF5_SDK_17.0.2_d674dde\examples\My\ Project\ECG_EMG_EEG-Project\Custm_Ble_Services\ble_cus\ble_cus.h \
  E\:/SEGGER/SEGGER\ Embedded\ Studio\ for\ ARM\ 5.60a/include/stdint.h \
  ../../../../../../components/softdevice/s132/headers/ble.h \
  ../../../../../../components/softdevice/s132/headers/nrf_svc.h \

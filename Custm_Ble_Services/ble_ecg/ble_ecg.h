@@ -29,19 +29,22 @@ NRF_SDH_BLE_OBSERVER(_name ## _obs,                                             
 #define ECG_SERVICE_UUID_BASE      { 0x23, 0xD1, 0x13, 0xEF, 0x5F, 0x78, 0x23, 0x15, \
                                      0xDE, 0xEF, 0x12, 0x12, 0x00, 0x00, 0x00, 0x00 }
 
-#define ECG_SERVICE_UUID           0x2000
+#define ECG_SERVICE_UUID           0x3000
 
-#define TIMESTAMP_CHAR_UUID        0x2001
-#define ECG_CHANNEL1_CHAR_UUID     0x2002 
-#define ECG_CHANNEL2_CHAR_UUID     0x2003	
-#define ECG_CHANNEL3_CHAR_UUID     0x2004
-#define ECG_CHANNEL4_CHAR_UUID     0x2005
+#define TIMESTAMP_CHAR_UUID        0x3001
+#define ECG_CHANNEL1_CHAR_UUID     0x3002 
+#define ECG_CHANNEL2_CHAR_UUID     0x3003	
+#define ECG_CHANNEL3_CHAR_UUID     0x3004
+#define ECG_CHANNEL4_CHAR_UUID     0x3005
 
 /**@brief ECG service event types.
  *
  */
 typedef enum
 {   
+    BLE_ECG_TIMESTAMP_CHAR_NOTIFICATIONS_ENABLED,
+    BLE_ECG_TIMESTAMP_CHAR_NOTIFICATIONS_DISABLED,
+
     BLE_ECG_CHANNEL1_CHAR_NOTIFICATIONS_ENABLED,
     BLE_ECG_CHANNEL1_CHAR_NOTIFICATIONS_DISABLED,
 

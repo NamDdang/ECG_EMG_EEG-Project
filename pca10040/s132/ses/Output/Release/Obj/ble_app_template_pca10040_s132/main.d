@@ -1,5 +1,5 @@
 Output/Release/Obj/ble_app_template_pca10040_s132/main.o: \
- D\:\Downloads\nRF5_SDK_17.0.2_d674dde\examples\My\ Project\ble_app_template_ADS_ECG\main.c \
+ D\:\Downloads\nRF5_SDK_17.0.2_d674dde\examples\My\ Project\ECG_EMG_EEG-Project\main.c \
  E\:/SEGGER/SEGGER\ Embedded\ Studio\ for\ ARM\ 5.60a/include/stdbool.h \
  E\:/SEGGER/SEGGER\ Embedded\ Studio\ for\ ARM\ 5.60a/include/stdint.h \
  E\:/SEGGER/SEGGER\ Embedded\ Studio\ for\ ARM\ 5.60a/include/string.h \

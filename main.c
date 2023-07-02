@@ -113,6 +113,7 @@
 
 #define BATTERY_TIMER_INTERVAL          APP_TIMER_TICKS(60000)                  /**< Battery timer interval (60000 ms). */
 #define SAADC_TIMER_INTERVAL            APP_TIMER_TICKS(200)                    /**< Saadc sampling timer interval (200 ms). */
+#define ECG_TIMER_INTERVAL              APP_TIMER_TICKS(1)                    /**< ECG sampling timer interval (200 ms). */
 
 NRF_BLE_GATT_DEF(m_gatt);                                                       /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                                         /**< Context for the Queued Write module.*/
@@ -123,17 +124,13 @@ BLE_ECG_DEF(m_ecg);
 
 APP_TIMER_DEF(m_saadc_timer_id);                                                /**< Potentio timer. */
 APP_TIMER_DEF(m_battery_timer_id);                                              /**< Battery timer. */
+APP_TIMER_DEF(m_ecg_timer_id);                                                  /**< ECG timer. */
 
 static uint16_t m_conn_handle = BLE_CONN_HANDLE_INVALID;                        /**< Handle of the current connection. */
 
 static ble_uuid_t m_adv_uuids[] =                                               /**< Universally unique service identifiers. */
 {
-    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
-};
-
-static ble_uuid_t m_adv_srdata_uuids[] = 
-{
-    {ECG_SERVICE_UUID, BLE_UUID_TYPE_VENDOR_BEGIN}
+    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE},
 };
 
 // Converting the saadc result to a voltage value (mv)
@@ -161,6 +158,11 @@ static uint32_t              m_adc_evt_counter;                                 
 
 static volatile uint8_t battery_level = 0;                                      /**< Battery level. */
 static volatile uint8_t potentio_level = 0; 
+static volatile uint8_t m_ecg_timestamp[8] = {0};
+static volatile uint8_t m_ecg_channel1_value[3] = {0}; 
+static volatile uint8_t m_ecg_channel2_value[3] = {0};
+static volatile uint8_t m_ecg_channel3_value[3] = {0};
+static volatile uint8_t m_ecg_channel4_value[3] = {0};
 
 
 static void advertising_start(bool erase_bonds);
@@ -218,6 +220,146 @@ static void saadc_timer_timeout_handler(void * p_context)
     APP_ERROR_CHECK(err_code);
 }
 
+/**@brief Function for updating the ecg channel 1 value.
+ */
+static void ecg_channel1_value_update(void)
+{
+    ret_code_t err_code;
+    uint8_t ecg_channel1_value[4] = { m_ecg_channel1_value[0], m_ecg_channel1_value[1], m_ecg_channel1_value[2] };
+    //NRF_LOG_INFO("sizeof(ecg_channel1_value) = %d", sizeof(ecg_channel1_value));
+    //NRF_LOG_INFO("ecg_channel1_value_update");
+
+    err_code = ble_ecg_channel1_value_update(&m_ecg, ecg_channel1_value, m_conn_handle);
+    if (err_code != NRF_SUCCESS &&
+        err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+        err_code != NRF_ERROR_INVALID_STATE &&
+        err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+    {
+        APP_ERROR_CHECK(err_code);
+    }
+}
+/**@brief Function for updating the ecg channel 2 value.
+ */
+static void ecg_channel2_value_update(void)
+{
+    ret_code_t err_code;
+    uint8_t ecg_channel2_value[4] = { m_ecg_channel2_value[0], m_ecg_channel2_value[1], m_ecg_channel2_value[2] };
+    
+    err_code = ble_ecg_channel2_value_update(&m_ecg, ecg_channel2_value, m_conn_handle);
+    if (err_code != NRF_SUCCESS &&
+        err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+        err_code != NRF_ERROR_INVALID_STATE &&
+        err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+    {
+        APP_ERROR_CHECK(err_code);
+    }
+}
+/**@brief Function for updating the ecg channel 3 value.
+ */
+static void ecg_channel3_value_update(void)
+{
+    ret_code_t err_code;
+    uint8_t ecg_channel3_value[4] = { m_ecg_channel3_value[0], m_ecg_channel3_value[1], m_ecg_channel3_value[2] };
+
+    err_code = ble_ecg_channel3_value_update(&m_ecg, ecg_channel3_value, m_conn_handle);
+    if (err_code != NRF_SUCCESS &&
+        err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+        err_code != NRF_ERROR_INVALID_STATE &&
+        err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+    {
+        APP_ERROR_CHECK(err_code);
+    }
+}
+/**@brief Function for updating the ecg channel 4 value.
+ */
+static void ecg_channel4_value_update(void)
+{
+    ret_code_t err_code;
+    uint8_t ecg_channel4_value[4] = { m_ecg_channel4_value[0], m_ecg_channel4_value[1], m_ecg_channel4_value[2] };
+
+    err_code = ble_ecg_channel4_value_update(&m_ecg, ecg_channel4_value, m_conn_handle);
+    if (err_code != NRF_SUCCESS &&
+        err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+        err_code != NRF_ERROR_INVALID_STATE &&
+        err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+    {
+        APP_ERROR_CHECK(err_code);
+    }
+}
+/**@brief Function for updating the ecg channel 4 value.
+ */
+static void ecg_timestamp_update(void)
+{
+    ret_code_t err_code;
+    uint8_t ecg_timestamp[8] = { m_ecg_timestamp[0], m_ecg_timestamp[1], m_ecg_timestamp[2], m_ecg_timestamp[3], m_ecg_timestamp[4], m_ecg_timestamp[5], m_ecg_timestamp[6], m_ecg_timestamp[7] };
+
+    err_code = ble_ecg_timestamp_update(&m_ecg, ecg_timestamp, m_conn_handle);
+    if (err_code != NRF_SUCCESS &&
+        err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
+        err_code != NRF_ERROR_INVALID_STATE &&
+        err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+    {
+        APP_ERROR_CHECK(err_code);
+    }
+}
+static volatile uint8_t count[8] = {0, 10, 20, 30, 40, 50, 60, 70};
+/**@brief Function for handling the ECG timer timeout.
+ *
+ * @details This function will be called each time the ECG timer expires.
+ * @note The ECG won't start the converstion untill its buffer is full.
+ *       That means  : untill we have SAMPLES_IN_BUFFER samples.
+ *       Which means : untill SAMPLES_IN_BUFFER samples are made.
+ */
+bool isChecked = false;
+int timerCount = 0;
+static void ecg_timer_timeout_handler(void * p_context)
+{
+    UNUSED_PARAMETER(p_context);
+    //timerCount++;
+    ////NRF_LOG_INFO("timerCount = %d", timerCount);
+    //if(timerCount == 1000)
+    //{
+    //  isChecked = true;
+    //}
+    
+    for(int i = 0; i < 8; i++)
+     {
+          count[i]++;
+          //if(isChecked == true)
+          //{
+          //  NRF_LOG_INFO("count[%d] = %d", i,  count[i]);
+          //}
+          m_ecg_timestamp[i] = count[i];
+          if(i < 3)
+          {
+              m_ecg_channel1_value[i] = count[i];
+              m_ecg_channel2_value[i] = count[i];
+              m_ecg_channel3_value[i] = count[i];
+              m_ecg_channel4_value[i] = count[i];
+              //NRF_LOG_INFO("[1] = %d       [2] = %d        [3] = %d       [4] = %d      [5] = %d      [6] = %d"
+              //    , *(m_ecg_channel1_value)
+              //    , *(m_ecg_channel1_value + 1)
+              //    , *(m_ecg_channel1_value + 2)
+              //    , *(m_ecg_channel2_value)
+              //    , *(m_ecg_channel2_value + 1)
+              //    , *(m_ecg_channel2_value + 2));
+          }
+     }
+    //NRF_LOG_INFO("%d,%d,%d", count[0], count[1], count[2]);
+    ecg_timestamp_update();
+    ecg_channel1_value_update();
+    ecg_channel2_value_update();
+    ecg_channel3_value_update();
+    ecg_channel4_value_update();
+    //NRF_LOG_INFO("[1] = %d       [2] = %d        [3] = %d       [4] = %d      [5] = %d      [6] = %d"
+    //            , *(m_ecg_channel1_value)
+    //            , *(m_ecg_channel1_value + 1)
+    //            , *(m_ecg_channel1_value + 2)
+    //            , *(m_ecg_channel2_value)
+    //            , *(m_ecg_channel2_value + 1)
+    //            , *(m_ecg_channel2_value + 2));
+}
+
 /**@brief Function for updating the Battery Level characteristic in Battery Service.
  */
 static void battery_level_update(void)
@@ -270,6 +412,12 @@ static void timers_init(void)
                                 APP_TIMER_MODE_REPEATED,
                                 saadc_timer_timeout_handler);
     APP_ERROR_CHECK(err_code); 
+
+     // Create ecg timer.
+    err_code = app_timer_create(&m_ecg_timer_id,
+                                APP_TIMER_MODE_REPEATED,
+                                ecg_timer_timeout_handler);
+    APP_ERROR_CHECK(err_code); 
 }
 
 
@@ -308,6 +456,9 @@ static void gap_params_init(void)
 static void gatt_init(void)
 {
     ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = nrf_ble_gatt_data_length_set(&m_gatt, m_conn_handle, 241);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -449,6 +600,18 @@ static void ecg_evt_handler(ble_ecg_t * p_ecg, ble_ecg_evt_t * p_evt)
 
   switch(p_evt->evt_type)
   {
+    case BLE_ECG_TIMESTAMP_CHAR_NOTIFICATIONS_ENABLED:
+    {
+        NRF_LOG_INFO("ecg timestamp char notifications are enabled.");
+
+    } break;
+
+    case BLE_ECG_TIMESTAMP_CHAR_NOTIFICATIONS_DISABLED:
+    {
+        NRF_LOG_INFO("ecg timestamp char notifications are disabled.");
+
+    } break;
+
     case BLE_ECG_CHANNEL1_CHAR_NOTIFICATIONS_ENABLED:
     {
         NRF_LOG_INFO("ecg channel 1 char notifications are enabled.");
@@ -605,6 +768,9 @@ static void application_timers_start(void)
 
     err_code = app_timer_start(m_saadc_timer_id, SAADC_TIMER_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code); 
+
+    err_code = app_timer_start(m_ecg_timer_id, ECG_TIMER_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
 }
 
 
@@ -656,7 +822,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
     }
 }
 
-
+static uint16_t tx_count = 0;
 /**@brief Function for handling BLE events.
  *
  * @param[in]   p_ble_evt   Bluetooth stack event.
@@ -708,6 +874,13 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             err_code = sd_ble_gap_disconnect(p_ble_evt->evt.gatts_evt.conn_handle,
                                              BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
             APP_ERROR_CHECK(err_code);
+            break;
+        
+        case BLE_GATTS_EVT_HVN_TX_COMPLETE: // under ble_evt_handler
+            tx_count++;
+            //NRF_LOG_INFO("NOTIFICATION TX COMPLETE COUNT: %d", p_ble_evt->evt.gatts_evt.params.hvn_tx_complete.count);
+            //NRF_LOG_INFO("count = %d", tx_count);
+           
             break;
 
         default:
@@ -1115,7 +1288,7 @@ void timer1_init()
     NRF_TIMER1->CC[0] = 10;                                 // Set value for TIMER1 compare register 0
 
     NRF_TIMER1->INTENSET = (TIMER_INTENSET_COMPARE0_Enabled << TIMER_INTENSET_COMPARE0_Pos);
-    NVIC_SetPriority(TIMER1_IRQn, 0);
+    NVIC_SetPriority(TIMER1_IRQn, 7);
     NVIC_EnableIRQ(TIMER1_IRQn);
     NRF_TIMER1->TASKS_START = 1;                            // Start TIMER1
 }

@@ -19,8 +19,23 @@ static void on_write(ble_ecg_t * p_ecg, ble_evt_t const * p_ble_evt)
     ble_gatts_evt_write_t const * p_evt_write = &p_ble_evt->evt.gatts_evt.params.write;
     ble_ecg_evt_t                 evt;
 
+     // writing to the ecg timestamp characteristic (cccd) "client characteristic configuration descriptor"
+   if (p_evt_write->handle == p_ecg->timestamp_char_handles.cccd_handle)
+   {
+      if (ble_srv_is_notification_enabled(p_evt_write->data))
+      {
+          evt.evt_type = BLE_ECG_TIMESTAMP_CHAR_NOTIFICATIONS_ENABLED;
+      }
+      else
+      {
+          evt.evt_type = BLE_ECG_TIMESTAMP_CHAR_NOTIFICATIONS_DISABLED;
+      }
+
+      p_ecg->evt_handler(p_ecg, &evt);
+   }
+
     // writing to the ecg channel 1 characteristic (cccd) "client characteristic configuration descriptor"
-   if (p_evt_write->handle == p_ecg->ecg_channel1_char_handles.cccd_handle)
+   else if (p_evt_write->handle == p_ecg->ecg_channel1_char_handles.cccd_handle)
    {
       if (ble_srv_is_notification_enabled(p_evt_write->data))
       {
@@ -154,7 +169,7 @@ uint32_t ble_ecg_init(ble_ecg_t * p_ecg, const ble_ecg_init_t * p_ecg_init)
     add_char_params.p_init_value      = timestamp_char_init_value;
 
     add_char_params.char_props.read   = 1;
-    //add_char_params.char_props.notify = 1;
+    add_char_params.char_props.notify = 1;
 
     add_char_params.read_access       = SEC_OPEN;
     add_char_params.cccd_write_access = SEC_OPEN;
@@ -169,14 +184,14 @@ uint32_t ble_ecg_init(ble_ecg_t * p_ecg, const ble_ecg_init_t * p_ecg_init)
 
     // Add the ecg channel 1 characteristic.
 
-    uint8_t ecg_channel1_char_init_value [3] = {0};
+    uint8_t ecg_channel1_char_init_value [4] = {0};
 
     memset(&add_char_params, 0, sizeof(add_char_params));
     add_char_params.uuid              = ECG_CHANNEL1_CHAR_UUID;
     add_char_params.uuid_type         = p_ecg->uuid_type;
 
-    add_char_params.init_len          = 3;
-    add_char_params.max_len           = 3;
+    add_char_params.init_len          = 4;
+    add_char_params.max_len           = 4;
     add_char_params.p_init_value      = ecg_channel1_char_init_value;
 
     add_char_params.char_props.read   = 1;
@@ -195,14 +210,14 @@ uint32_t ble_ecg_init(ble_ecg_t * p_ecg, const ble_ecg_init_t * p_ecg_init)
 
     // Add the ecg channel 2 characteristic.
 
-    uint8_t ecg_channel2_char_init_value [3] = {0};
+    uint8_t ecg_channel2_char_init_value [4] = {0};
 
     memset(&add_char_params, 0, sizeof(add_char_params));
     add_char_params.uuid              = ECG_CHANNEL2_CHAR_UUID;
     add_char_params.uuid_type         = p_ecg->uuid_type;
 
-    add_char_params.init_len          = 3;// (in bytes)
-    add_char_params.max_len           = 3;
+    add_char_params.init_len          = 4;// (in bytes)
+    add_char_params.max_len           = 4;
     add_char_params.p_init_value      = ecg_channel2_char_init_value;
 
     add_char_params.char_props.read   = 1;
@@ -221,14 +236,14 @@ uint32_t ble_ecg_init(ble_ecg_t * p_ecg, const ble_ecg_init_t * p_ecg_init)
 
     // Add the ecg channel 3 characteristic.
 
-    uint8_t ecg_channel3_char_init_value [3] = {0};
+    uint8_t ecg_channel3_char_init_value [4] = {0};
 
     memset(&add_char_params, 0, sizeof(add_char_params));
     add_char_params.uuid              = ECG_CHANNEL3_CHAR_UUID;
     add_char_params.uuid_type         = p_ecg->uuid_type;
 
-    add_char_params.init_len          = 3;// (in bytes)
-    add_char_params.max_len           = 3;
+    add_char_params.init_len          = 4;// (in bytes)
+    add_char_params.max_len           = 4;
     add_char_params.p_init_value      = ecg_channel3_char_init_value;
 
     add_char_params.char_props.read   = 1;
@@ -247,14 +262,14 @@ uint32_t ble_ecg_init(ble_ecg_t * p_ecg, const ble_ecg_init_t * p_ecg_init)
 
     // Add the ecg channel 4 characteristic.
 
-    uint8_t ecg_channel4_char_init_value [3] = {0};
+    uint8_t ecg_channel4_char_init_value [4] = {0};
 
     memset(&add_char_params, 0, sizeof(add_char_params));
     add_char_params.uuid              = ECG_CHANNEL4_CHAR_UUID;
     add_char_params.uuid_type         = p_ecg->uuid_type;
 
-    add_char_params.init_len          = 3;// (in bytes)
-    add_char_params.max_len           = 3;
+    add_char_params.init_len          = 4;// (in bytes)
+    add_char_params.max_len           = 4;
     add_char_params.p_init_value      = ecg_channel4_char_init_value;
 
     add_char_params.char_props.read   = 1;
@@ -282,18 +297,21 @@ uint32_t ble_ecg_init(ble_ecg_t * p_ecg, const ble_ecg_init_t * p_ecg_init)
  *
  * @return      NRF_SUCCESS on success, otherwise an error code.
  */
-
+#include "nrf_log.h"
+#include "nrf_log_ctrl.h"
+#include "nrf_log_default_backends.h"
 uint32_t ble_ecg_channel1_value_update(ble_ecg_t * p_ecg, uint8_t * ecg_channel1_value, uint16_t conn_handle)
 {
     ble_gatts_hvx_params_t params;
     uint16_t len = sizeof(ecg_channel1_value);
-
+    //NRF_LOG_INFO("len = %d", len);
     memset(&params, 0, sizeof(params));
     params.type   = BLE_GATT_HVX_NOTIFICATION;
     params.handle = p_ecg->ecg_channel1_char_handles.value_handle;
     params.p_data = ecg_channel1_value;
     params.p_len  = &len;
-
+    //NRF_LOG_INFO("params.p_len = %d", *(params.p_len));
+    //NRF_LOG_INFO("p_data: [1] = %d       [2] = %d        [3] = %d       [4] = %d", *(params.p_data), *(params.p_data + 1), *(params.p_data + 2), *(params.p_data + 3));
     return sd_ble_gatts_hvx(conn_handle, &params);
 }
 
