@@ -292,7 +292,8 @@ static void ecg_timestamp_update(void)
 {
     ret_code_t err_code;
     uint8_t ecg_timestamp[8] = { m_ecg_timestamp[0], m_ecg_timestamp[1], m_ecg_timestamp[2], m_ecg_timestamp[3], m_ecg_timestamp[4], m_ecg_timestamp[5], m_ecg_timestamp[6], m_ecg_timestamp[7] };
-
+    //NRF_LOG_INFO("sizeof(ecg_timestamp) = %d", sizeof(ecg_timestamp));
+    //NRF_LOG_INFO("ecg_channel1_value_update");
     err_code = ble_ecg_timestamp_update(&m_ecg, ecg_timestamp, m_conn_handle);
     if (err_code != NRF_SUCCESS &&
         err_code != BLE_ERROR_INVALID_CONN_HANDLE &&
